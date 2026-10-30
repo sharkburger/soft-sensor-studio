@@ -1,6 +1,6 @@
 # Soft Sensor Studio V2 — Phases 1–3
 
-[Live demo](https://sharkburger.github.io/soft-sensor-studio/) · [Repository](https://github.com/sharkburger/soft-sensor-studio)
+[Home](https://weiwu0115.github.io/soft-sensor-studio/) · [CAD Studio](https://weiwu0115.github.io/soft-sensor-studio/studio.html) · [Research Database](https://weiwu0115.github.io/soft-sensor-studio/research.html) · [Repository](https://github.com/WeiWu0115/soft-sensor-studio)
 
 A local-first React/TypeScript CAD research prototype for cylindrical knitted sensor sleeves. No backend or account required.
 
@@ -69,9 +69,9 @@ The cylinder is a spatial preview, not a cloth, anatomical fit, electrical or cl
 
 The pinned GitHub Actions workflow `.github/workflows/deploy.yml` runs tests and builds on Node 24 before deploying `dist/` to Pages. Pushes to `main` redeploy automatically; manual workflow dispatch is also available. The Vite base is `/soft-sensor-studio/`, matching this repository path. Deployment follows the [official Vite GitHub Pages guide](https://vite.dev/guide/static-deploy.html#github-pages). No tokens are embedded in the source or frontend; projects remain in the visitor’s own browser localStorage.
 
-## Material Playground — presentation edition
+## Pattern Playground — presentation edition
 
-The separate [Material Playground](https://sharkburger.github.io/soft-sensor-studio/showcase.html) is intended for research demos and presentations. The original CAD editor remains at the root URL.
+The separate [Pattern Playground](https://weiwu0115.github.io/soft-sensor-studio/showcase.html) is intended for research demos and presentations. The original CAD editor is available at [studio.html](https://weiwu0115.github.io/soft-sensor-studio/studio.html); the root URL is the project homepage.
 
 - Four procedural knitted motifs: Contour, Meander, Chevron, Lattice.
 - Paint/erase conductive stitches directly on the textured swatch; undo/redo edits; switch to assignment-grid view; zoom the swatch.
@@ -88,7 +88,7 @@ The showcase is a second Vite entry (`showcase.html`). Both entries build and de
 
 ## Threadlines — personal data workshop edition
 
-Independent entry: [Threadlines](https://sharkburger.github.io/soft-sensor-studio/threadlines.html). Earlier CAD and Material Playground versions remain available.
+Independent entry: [Threadlines](https://weiwu0115.github.io/soft-sensor-studio/threadlines.html). Earlier CAD and Pattern Playground versions remain available.
 
 Threadlines turns personal time-series data into an artistic textile. It supports a column-mapping import flow for CSV, TSV and JSON record arrays (including `{ "data": [...] }`), three motifs, palette selection, physical size/gauge settings, a textured hanging-object preview, and optional conductive yarn roles with synthesized note playback. Supported files are limited to 8 MB and 100,000 rows. Vendor exports have not been exhaustively validated; inspect and select columns during import. PDF reports and ZIP archives are not parsed.
 
