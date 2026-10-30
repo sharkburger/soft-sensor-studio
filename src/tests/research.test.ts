@@ -14,7 +14,7 @@ import {
   subset,
   latestCoding,
 } from "../research/service";
-import { emptyCoding, type ResearchDataset } from "../research/model";
+import { emptyCoding, type Paper, type ResearchDataset } from "../research/model";
 const fixture = () => parseResearch(JSON.stringify(seed));
 const rejected = (fn: (d: ResearchDataset) => void) => {
   const d = fixture();
@@ -22,13 +22,18 @@ const rejected = (fn: (d: ResearchDataset) => void) => {
   expect(() => parseResearch(JSON.stringify(d))).toThrow();
 };
 describe("Research dataset schema and isolation", () => {
-  it("loads all twelve candidates without invented inclusion decisions", () => {
+  it("loads the expanded catalog without inventing primary-study inclusion decisions", () => {
     const d = fixture();
-    expect(d.papers).toHaveLength(12);
-    expect(d.screening).toEqual([]);
-    expect(d.papers.every((p) => screeningState(d, p.id) === "Candidate")).toBe(
-      true,
-    );
+    expect(d.papers.map((p) => p.id)).toEqual(expect.arrayContaining([
+      "knitui", "hester-hofmann-machine-knit-review", "hester-review-ref-132",
+    ]));
+    expect(d.screening).toEqual([expect.objectContaining({
+      paperId: "hester-hofmann-machine-knit-review",
+      reviewStage: "full_text", decision: "maybe",
+    })]);
+    expect(screeningState(d, "hester-hofmann-machine-knit-review")).toBe("Maybe");
+    expect(d.papers.filter((p) => p.id !== "hester-hofmann-machine-knit-review")
+      .every((p) => screeningState(d, p.id) === "Candidate")).toBe(true);
     expect(d.materialReferences).toHaveLength(1);
     expect(d.papers.some((p) => p.id === "fashionary")).toBe(false);
   });
@@ -95,31 +100,33 @@ describe("Research search and evidence", () => {
     ).toEqual([]);
   });
   it("combines date, type, verification, roles and coding filters", () => {
+    // Controlled records isolate filter behavior from additions to the live catalog.
     const d = fixture();
-    expect(
-      filterPapers(d, {
-        ...emptyFilters,
-        yearFrom: "2024",
-        publicationType: "journal",
-        verificationStatus: "verified",
-      }).length,
-    ).toBe(3);
-    expect(
-      filterPapers(d, { ...emptyFilters, targetRoles: "clinician" }).map(
-        (p) => p.id,
-      ),
-    ).toEqual(["mediknit"]);
-    expect(
-      filterPapers(d, { ...emptyFilters, fabricationMethods: "weave" }).map(
-        (p) => p.id,
-      ),
-    ).toEqual(["adacad"]);
-    expect(
-      filterPapers(d, { ...emptyFilters, yearTo: "2026" }).every(
-        (p) => p.year !== null,
-      ),
-    ).toBe(true);
+    const paper = (id: string, patch: Partial<Paper> = {}): Paper => ({
+      ...d.papers[0], id, title: id, year: 2024,
+      publicationType: "journal", verificationStatus: "verified", ...patch,
+    });
+    d.papers = [
+      paper("match"), paper("older", {year: 2023}),
+      paper("conference", {publicationType: "conference"}),
+      paper("unverified", {verificationStatus: "needs_verification"}),
+      paper("unknown-year", {year: null}), paper("future", {year: 2027}),
+      paper("uncoded"),
+    ];
+    d.coding = [
+      {...emptyCoding("match", "reviewer"), targetRoles: ["clinician"], fabricationMethods: ["weave"]},
+      {...emptyCoding("older", "reviewer"), targetRoles: ["clinician"], fabricationMethods: ["knit"]},
+    ];
+    const ids = (filters: Partial<typeof emptyFilters>) =>
+      filterPapers(d, {...emptyFilters, ...filters}).map((p) => p.id);
+    expect(ids({yearFrom: "2024", yearTo: "2026", publicationType: "journal",
+      verificationStatus: "verified"})).toEqual(["match", "uncoded"]);
+    expect(ids({targetRoles: "clinician"})).toEqual(["match", "older"]);
+    expect(ids({fabricationMethods: "weave"})).toEqual(["match"]);
+    expect(ids({yearFrom: "2024", targetRoles: "clinician", fabricationMethods: "weave"})).toEqual(["match"]);
+    expect(ids({yearTo: "2026"})).toEqual(["conference", "match", "older", "uncoded", "unverified"]);
   });
+
   it("sorts unknown years after known years", () => {
     const d = fixture();
     const p = filterPapers(d, emptyFilters, "year");
@@ -210,7 +217,8 @@ describe("Research search and evidence", () => {
       reviewStage: "full_text",
     });
     expect(screeningState(d, "knitui")).toBe("Included");
-    expect(d.screening).toHaveLength(4);
+    expect(d.screening.filter((s) => s.paperId === "knitui")).toHaveLength(4);
+    expect(d.screening.filter((s) => s.paperId !== "knitui")).toEqual(seed.screening);
     expect(() => parseResearch(JSON.stringify(d))).not.toThrow();
   });
 });

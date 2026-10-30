@@ -22,7 +22,10 @@ const base = () => ({
 const point = (column: number, row: number) => ({ column, row });
 describe("soft circuit schema and library", () => {
   it("covers every required profile category without measured performance claims", () => {
-    expect(new Set(circuitLibrary.map((m) => m.category)).size).toBe(7);
+    expect([...new Set(circuitLibrary.map((m) => m.category))].sort()).toEqual([
+      "Capacitive sensor", "Conductive fabric", "Conductive yarn", "Connector",
+      "Dielectric material", "Electrode", "Power source", "Resistive sensor",
+    ]);
     expect(circuitLibrary.every((m) => m.consideration.length > 20)).toBe(true);
   });
   it("leaves legacy files unchanged and round trips circuit intent, materials, nodes and links", () => {
@@ -132,7 +135,15 @@ describe("schematic circuit geometry checks", () => {
     expect(warnings).not.toContain("no explicitly assigned");
     expect(warnings).toContain("does not geometrically land");
     expect(warnings).toContain("channel differs");
-    expect(warnings).toContain("verify physical junction");
+    expect(warnings).not.toContain("verify physical junction");
+    expect(warnings).not.toContain("crossing or touching conductive geometry");
+    // Removing the declared connection must expose the overlapping terminal.
+    const unassigned = updateCircuitElement(p, p.circuit!.elements[0].id, {
+      fromId: undefined,
+    });
+    expect(circuitChecks(unassigned).join(" ")).toContain(
+      "crossing or touching conductive geometry",
+    );
   });
   it("detects crossing, touching, collinear and near-miss trace geometry including widths", () => {
     expect(
